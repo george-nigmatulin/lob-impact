@@ -2,7 +2,8 @@
 
 **Does your generative limit-order-book model reproduce market impact?**
 
-Distributional metrics answer whether generated order flow *looks* like the real stream.
+Distributional metrics, such as those of [LOB-Bench](https://github.com/peernagy/lob_bench),
+answer whether generated order flow *looks* like the real stream.
 They cannot answer whether the model *reacts* correctly when someone trades against it,
 and a model used as a market simulator is used for exactly that. These tools measure the
 reaction.
@@ -138,25 +139,25 @@ gate fails reports that the quantity is not identified rather than printing a nu
 response that does not clear three standard errors, a fit without enough positive bins, a
 bootstrap whose resamples are all undefined.
 
-## Two things that will bite you
+## Sampling and rollout length
 
-**Sample the days, not the first N files.** Paths sort by date, so the first N files are
-the earliest days. For a model with thousands of rollouts that can be a single trading day,
-measured against a reference that spans the whole period. `flow_balance` and `drift` spread
-their sample over trading days by default, and their tables carry the day and rollout
-counts. Check those columns.
+**Sampling across trading days.** Rollout files sort by date, so the first N files cover
+only the earliest trading days; for a model with many rollouts this can be a single day,
+compared with a reference that spans the whole period. `flow_balance` and `drift` therefore
+spread their sample evenly over trading days by default, and their tables report the number
+of days and rollouts used.
 
-**Match the horizon to the reference.** The estimators have fit windows: the sign
-autocorrelation is fitted over lags of 2 to 40 trades, the price variance up to lag 100. A
-rollout much shorter than about ten times the longest lag starves them. Measure the model
-and the reference at the same length (`--max_msgs` truncates), or the difference you see is
-the truncation, not the model.
+**Rollout length.** The estimators fit over fixed lag windows: the sign autocorrelation over
+lags of 2 to 40 trades, the price variance up to lag 100. Rollouts much shorter than about
+ten times the longest lag leave these fits with few observations. Model and reference
+rollouts should therefore have the same length; `--max_msgs` truncates every rollout to a
+common length.
 
-## What is not here
+## Not included
 
-- Training and generation. Bring your rollouts.
+- Model training and rollout generation: the tools take rollouts as input.
 - Market data. LOBSTER data ([lobsterdata.com](https://lobsterdata.com)) is licensed
-  separately, and nothing here ships it, raw or derived.
+  separately and is not distributed here, in raw or derived form.
 - The order-book simulator that turns generated messages into book states, for example
   [JAX-LOB](https://github.com/KangOxford/jax-lob).
 - Distributional metrics: see [LOB-Bench](https://github.com/peernagy/lob_bench).
