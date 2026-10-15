@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.ipynb_checkpoints/
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# local path configuration: the example is tracked, your copy is not
+config/paths.yaml
+
+# data and outputs
+data/
+results/
+scratch/
+*.npz
+*.npy
+*.csv

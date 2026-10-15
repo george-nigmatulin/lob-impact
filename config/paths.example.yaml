@@ -1,0 +1,11 @@
+# Copy to config/paths.yaml and edit, or set the same names (upper-case) as
+# environment variables; the environment wins. Relative paths in this file are taken
+# relative to the repository root. Run `python -m lobi.paths` to see what was resolved.
+
+lobi_data:     ./data            # controls/ and grid/ are looked for here
+
+# Uncomment to place one of the two rollout trees somewhere else:
+# lobi_controls: ./data/controls   # rollouts without a metaorder: free runs, blind arm
+# lobi_grid:     ./data/grid       # metaorder-injection rollouts: the visible arm
+
+lobi_results:  ./results         # where the tools write caches and tables

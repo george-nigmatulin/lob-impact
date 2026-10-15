@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lob-impact"
+version = "0.1.0"
+description = "Does a generative limit-order-book model reproduce market impact? Measurement tools for model rollouts."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{name = "George Nigmatulin"}]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "matplotlib>=3.7",
+    "PyYAML>=6.0",
+]
+keywords = ["limit order book", "market impact", "generative models", "benchmark"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7"]
+
+[project.urls]
+Repository = "https://github.com/george-nigmatulin/lob-impact"
+
+[tool.setuptools]
+packages = ["lobi"]
