@@ -3,7 +3,7 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "lob_impact"
+name = "lob-impact"
 version = "0.2.0"
 description = "Does a generative limit-order-book model reproduce market impact? Measurement tools for model rollouts."
 readme = "README.md"
@@ -25,6 +25,9 @@ classifiers = [
 
 [project.optional-dependencies]
 test = ["pytest>=7"]
+
+[project.scripts]
+lob-impact = "lob_impact.__main__:main"
 
 [project.urls]
 Repository = "https://github.com/george-nigmatulin/lob-impact"
