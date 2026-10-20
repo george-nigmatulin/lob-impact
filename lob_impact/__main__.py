@@ -1,4 +1,4 @@
-"""List the tools: python -m lobi."""
+"""List the tools: python -m lob_impact."""
 import importlib
 
 TOOLS = ('flow_balance', 'drift', 'scorecard', 'trajectory', 'master_curve', 'triangle',
@@ -6,10 +6,10 @@ TOOLS = ('flow_balance', 'drift', 'scorecard', 'trajectory', 'master_curve', 'tr
 
 
 def main():
-    print('LOB-Impact Benchmark tools. Run python -m lobi.<tool> --help, or read the full')
-    print('documentation of a tool with python -m pydoc lobi.<tool>.\n')
+    print('LOB-Impact Benchmark tools. Run python -m lob_impact.<tool> --help, or read the full')
+    print('documentation of a tool with python -m pydoc lob_impact.<tool>.\n')
     for name in TOOLS:
-        doc = (importlib.import_module('lobi.' + name).__doc__ or '').strip()
+        doc = (importlib.import_module('lob_impact.' + name).__doc__ or '').strip()
         print('  %-13s %s' % (name, doc.split('\n')[0]))
 
 

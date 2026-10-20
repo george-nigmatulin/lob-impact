@@ -11,7 +11,7 @@ import os
 import numpy as np
 import pytest
 
-from lobi import (decay_shape, delta, drift, flow_balance, master_curve, points, scorecard,
+from lob_impact import (decay_shape, delta, drift, flow_balance, master_curve, points, scorecard,
                   synthetic, trajectory, triangle)
 
 STOCK = synthetic.STOCK

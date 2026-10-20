@@ -19,19 +19,19 @@ Inputs (headerless orderbook CSVs: ask_price_1, ask_size_1, bid_price_1, bid_siz
 prices in integer units with TICK units per tick)
   <controls>/<noins_sub>/<STOCK>-<MODEL>-beta/{buy,sell}/**/data_gen/*orderbook*gen*.csv
   The YYYY-MM-DD date in the file name identifies the trading day. <controls> defaults
-  to LOBI_CONTROLS, <noins_sub> to 'noins'; the reference arm is read from --ref_sub,
+  to LOB_IMPACT_CONTROLS, <noins_sub> to 'noins'; the reference arm is read from --ref_sub,
   which defaults to <noins_sub>. Rows whose first four cells do not parse as numbers
   are skipped.
 
 Output
-  <LOBI_RESULTS>/drift_<STOCK><tag>.md (or in --outdir)
+  <LOB_IMPACT_RESULTS>/drift_<STOCK><tag>.md (or in --outdir)
     | model | drift, ticks | s.e. | n rollouts | days |
   model labels are printed with '_' replaced by '-'; 'days' counts the distinct trading
   days of the selected rollouts over both side folders; a model with no usable rollout
   gets 'n/a'. The tool exits with an error when no model has a usable rollout.
 
 Example
-  python -m lobi.drift --stock XYZ --models MyModel,MyBaseline
+  python -m lob_impact.drift --stock XYZ --models MyModel,MyBaseline
 """
 import argparse
 import csv
@@ -40,8 +40,8 @@ import os
 
 import numpy as np
 
-from lobi.flow_balance import days_of, stratify
-from lobi.paths import LOBI_CONTROLS, LOBI_RESULTS
+from lob_impact.flow_balance import days_of, stratify
+from lob_impact.paths import LOB_IMPACT_CONTROLS, LOB_IMPACT_RESULTS
 
 TICK = 100.0               # price units per tick
 SENT = 2147483647          # price written for an empty book side (int32 max)
@@ -119,7 +119,7 @@ def model_list(models, ref):
 
 def parse_args(argv):
     ap = argparse.ArgumentParser(
-        prog='python -m lobi.drift',
+        prog='python -m lob_impact.drift',
         description='Free drift (mean end-to-end mid displacement, ticks) of '
                     'free-running rollouts.')
     ap.add_argument('--stock', required=True, help='ticker used in the folder names')
@@ -129,15 +129,15 @@ def parse_args(argv):
                     help='reference arm label, put first in the table unless already in '
                          "--models; pass '' to leave it out")
     ap.add_argument('--n_files', type=int, default=64, help='per model per side')
-    ap.add_argument('--controls', default=LOBI_CONTROLS,
-                    help='root of the free-generation rollouts (default: LOBI_CONTROLS)')
+    ap.add_argument('--controls', default=LOB_IMPACT_CONTROLS,
+                    help='root of the free-generation rollouts (default: LOB_IMPACT_CONTROLS)')
     ap.add_argument('--noins_sub', default='noins',
                     help='subdirectory of --controls to read')
     ap.add_argument('--ref_sub', default=None,
                     help='subdirectory holding the reference arm (default: --noins_sub)')
     ap.add_argument('--tag', default='', help='output filename suffix')
     ap.add_argument('--outdir', '--out_dir', dest='outdir', default=None,
-                    help='output directory (default: LOBI_RESULTS)')
+                    help='output directory (default: LOB_IMPACT_RESULTS)')
     return ap.parse_args(argv)
 
 
@@ -156,9 +156,9 @@ def main(argv=None):
         used += n
     if not used:
         raise SystemExit('no usable rollouts for %s under %s: check --stock, --models and the '
-                         'layout (python -m pydoc lobi.drift)' % (args.stock, args.controls))
+                         'layout (python -m pydoc lob_impact.drift)' % (args.stock, args.controls))
 
-    outdir = args.outdir or LOBI_RESULTS
+    outdir = args.outdir or LOB_IMPACT_RESULTS
     os.makedirs(outdir, exist_ok=True)
     out = os.path.join(outdir, f'drift_{args.stock}{args.tag}.md')
     with open(out, 'w', encoding='utf-8') as fh:

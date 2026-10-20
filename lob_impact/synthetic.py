@@ -19,10 +19,10 @@ Layout written under --out (see README for the contract):
     controls/invisible/XYZ-ToyModel-beta/{buy,sell}/exp_1/...             blind arm
     grid/XYZ-<MODEL>-<shape>/{buy,sell}/exp_1/data_gen/*.csv              visible arm
     grid/.../exp_1/aggressive_indices_<YYYY-MM-DD>.csv                    child rows
-    daily_stats.csv                                                       lobi.vol format
+    daily_stats.csv                                                       lob_impact.vol format
 
 Usage:
-    python -m lobi.synthetic --out /tmp/lobi_demo
+    python -m lob_impact.synthetic --out /tmp/lob_impact_demo
 """
 import argparse
 import os
@@ -158,15 +158,15 @@ def generate(out, seed=0):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog='python -m lobi.synthetic',
+    ap = argparse.ArgumentParser(prog='python -m lob_impact.synthetic',
                                  description='Write a small synthetic data set in the input layout.')
     ap.add_argument('--out', required=True, help='directory to create the data set in')
     ap.add_argument('--seed', type=int, default=0, help='random seed (default 0)')
     args = ap.parse_args(argv)
     roots = generate(args.out, args.seed)
     print(f'synthetic data -> {args.out}  (stock {STOCK}, models Historic and ToyModel)')
-    print(f'  export LOBI_CONTROLS={roots["controls"]}')
-    print(f'  export LOBI_GRID={roots["grid"]}')
+    print(f'  export LOB_IMPACT_CONTROLS={roots["controls"]}')
+    print(f'  export LOB_IMPACT_GRID={roots["grid"]}')
     print(f'  daily statistics: {roots["daily"]}')
 
 

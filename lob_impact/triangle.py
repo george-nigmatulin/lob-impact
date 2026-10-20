@@ -38,7 +38,7 @@ Inputs
     visible  <grid>/<STOCK>-<MODEL>-beta/{buy,sell}/
     blind    <controls>/<blind_sub>/<STOCK>-<MODEL>-beta/{buy,sell}/
     noins    <controls>/<noins_sub>/<STOCK>-<MODEL>-beta/buy/
---grid defaults to LOBI_GRID, --controls to LOBI_CONTROLS, --blind_sub to 'invisible' and
+--grid defaults to LOB_IMPACT_GRID, --controls to LOB_IMPACT_CONTROLS, --blind_sub to 'invisible' and
 --noins_sub to 'noins'. Each side directory holds either
 data_gen/ itself or exp_* directories that do; empty exp_* directories are ignored and an
 arm spread over several exp_* directories is read as a whole.
@@ -55,7 +55,7 @@ conditioning windows <visible-buy exp>/data_cond/*orderbook*.csv, stored as 'his
 
 Outputs
 -------
-<out_dir>/<MODEL>/numbers.json   (out_dir default: LOBI_RESULTS/triangle/<STOCK>)
+<out_dir>/<MODEL>/numbers.json   (out_dir default: LOB_IMPACT_RESULTS/triangle/<STOCK>)
     model, stock, baseline, invisible_analog [, empirical] [, hist_spread], and per arm
     'visible-buy', 'visible-sell', 'invisible-buy', 'invisible-sell', 'noins':
       n                     rollouts read
@@ -74,10 +74,10 @@ token NaN, which Python's json module reads but strict JSON parsers reject.
 
 Usage
 -----
-    python -m lobi.triangle build --stock XYZ --models MyModel
-    python -m lobi.triangle build --stock XYZ --models Historic,MyBaseline \\
+    python -m lob_impact.triangle build --stock XYZ --models MyModel
+    python -m lob_impact.triangle build --stock XYZ --models Historic,MyBaseline \\
         --baselines Historic,MyBaseline --blind_analog MyBaseline=Historic
-    python -m lobi.triangle ratio --stock XYZ --models MyModel
+    python -m lob_impact.triangle ratio --stock XYZ --models MyModel
 """
 import argparse
 import csv
@@ -88,7 +88,7 @@ import re
 
 import numpy as np
 
-from lobi.paths import LOBI_CONTROLS, LOBI_GRID, LOBI_RESULTS
+from lob_impact.paths import LOB_IMPACT_CONTROLS, LOB_IMPACT_GRID, LOB_IMPACT_RESULTS
 
 try:
     import pandas as _pd
@@ -217,7 +217,7 @@ def load_regime(exp, sign, n_samples, with_insertions, m_max=M_MAX):
     n = len(trajs)
     if n == 0:
         raise SystemExit('%s: no usable rollout (a message/orderbook pair whose first row has '
-                         'a valid mid); check the layout (python -m pydoc lobi.triangle)' % exp)
+                         'a valid mid); check the layout (python -m pydoc lob_impact.triangle)' % exp)
     # a rollout whose book dies at the end leaves final = NaN; aggregate nan-robustly
     finals = np.asarray(finals, float)
     nf = max(int(np.isfinite(finals).sum()), 1)
@@ -414,7 +414,7 @@ def build(args):
     stray = sorted(set(analogs) - baselines)
     if stray:
         raise SystemExit('--blind_analog applies to --baselines only: %s' % ','.join(stray))
-    root = args.out_dir or os.path.join(LOBI_RESULTS, 'triangle', args.stock)
+    root = args.out_dir or os.path.join(LOB_IMPACT_RESULTS, 'triangle', args.stock)
     for model in models:
         build_model(args, model, model in baselines, analogs.get(model),
                     os.path.join(root, model))
@@ -424,7 +424,7 @@ def ratio(args):
     if args.numbers:
         pairs = [(None, path) for path in args.numbers]
     else:
-        root = args.out_dir or os.path.join(LOBI_RESULTS, 'triangle', args.stock)
+        root = args.out_dir or os.path.join(LOB_IMPACT_RESULTS, 'triangle', args.stock)
         pairs = [(m, os.path.join(root, m, 'numbers.json')) for m in _models(args.models)]
     for model, path in pairs:
         d = load_json(path)
@@ -435,7 +435,7 @@ def ratio(args):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog='python -m lobi.triangle',
+    ap = argparse.ArgumentParser(prog='python -m lob_impact.triangle',
                                  description=__doc__.split('\n')[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -449,8 +449,8 @@ def main(argv=None):
     b.add_argument('--blind_analog', default='',
                    help='comma-separated BASE=OTHER: blind arm of baseline BASE read from '
                         "OTHER's grid rollouts (e.g. MyBaseline=Historic)")
-    b.add_argument('--grid', default=LOBI_GRID, help='root of the visible (metaorder) rollouts')
-    b.add_argument('--controls', default=LOBI_CONTROLS,
+    b.add_argument('--grid', default=LOB_IMPACT_GRID, help='root of the visible (metaorder) rollouts')
+    b.add_argument('--controls', default=LOB_IMPACT_CONTROLS,
                    help='root holding the no-child-order and blind rollouts')
     b.add_argument('--noins_sub', default='noins',
                    help='subdirectory of --controls with the no-child-order arm')
@@ -462,7 +462,7 @@ def main(argv=None):
     b.add_argument('--cond_spread', action='store_true',
                    help="also store 'hist_spread', the mean spread of the data_cond windows")
     b.add_argument('--out_dir', '--outdir', dest='out_dir', default=None,
-                   help='default LOBI_RESULTS/triangle/<STOCK>; one sub-directory per model')
+                   help='default LOB_IMPACT_RESULTS/triangle/<STOCK>; one sub-directory per model')
     b.add_argument('--no_plot', action='store_true', help='write numbers.json only')
 
     r = sub.add_parser('ratio', help='print the visible/blind ratio from numbers.json files')

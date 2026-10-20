@@ -2,20 +2,20 @@
 
 The square-root law of market impact reads I ~ sigma * (Q / V)^delta, with
 delta = 0.5 for a square root. This tool estimates delta per model from the
-points cache written by lobi.points and reports a 95% confidence interval that
+points cache written by lob_impact.points and reports a 95% confidence interval that
 resamples trading days, the independent unit of the rollouts.
 
 Inputs:
-    --points   points cache from lobi.points (default <LOBI_RESULTS>/points_<STOCK>.npz),
+    --points   points cache from lob_impact.points (default <LOB_IMPACT_RESULTS>/points_<STOCK>.npz),
                keys <model>_Q, <model>_I, <model>_days (<model>_kc is not used here)
-    --daily    daily statistics CSV, format as in lobi.vol (ticker, day, open_price,
+    --daily    daily statistics CSV, format as in lob_impact.vol (ticker, day, open_price,
                highest_price, lowest_price, close_price, execution_sum)
     --stock    ticker whose daily rows are joined to the points by day
     --models   comma-separated model names, processed in this order
 
 Transformation (per point; points with non-finite x or y are dropped):
     x = log(Q / V)    V = execution_sum of the point's day
-    y = I / sigma     sigma = daily Parkinson volatility of that day (lobi.vol)
+    y = I / sigma     sigma = daily Parkinson volatility of that day (lob_impact.vol)
 
 Point estimate (signed binned estimator): sort the points by x, cut them into
 NBINS equal-count bins, take per bin the mean x and the signed mean y, and fit
@@ -42,7 +42,7 @@ A single numpy RandomState(SEED) stream is advanced across the models in
 --models order; models absent from the cache do not consume draws, so the
 interval of a model depends on which models precede it.
 
-Outputs (under --out_dir, default LOBI_RESULTS):
+Outputs (under --out_dir, default LOB_IMPACT_RESULTS):
     delta_<STOCK>.json   {"<STOCK>:<model>": {"delta", "lo", "hi", "hw", "n_day", "n_pts"}, ...,
                           "absent": [...], "degenerate": [...]}
                          delta  point estimate (NaN when not identified; written as
@@ -57,7 +57,7 @@ Outputs (under --out_dir, default LOBI_RESULTS):
     delta_<STOCK>.md     the same as a Markdown table
 
 Usage:
-    python -m lobi.delta --stock XYZ --models MyModel,Baseline --daily daily_stats.csv \\
+    python -m lob_impact.delta --stock XYZ --models MyModel,Baseline --daily daily_stats.csv \\
         [--points points_XYZ.npz] [--out_dir DIR]
 """
 import argparse
@@ -66,8 +66,8 @@ import os
 
 import numpy as np
 
-from lobi.paths import LOBI_RESULTS
-from lobi.vol import daily_sigmas
+from lob_impact.paths import LOB_IMPACT_RESULTS
+from lob_impact.vol import daily_sigmas
 
 NBINS = 18          # equal-count bins in log(Q / V)
 MIN_BINS = 5        # fewest positive bins for an identifiable slope
@@ -78,7 +78,7 @@ SEED = 20260820     # seed of the bootstrap stream (fixed for reproducibility)
 def load_points(points_path, stock, model, sig):
     """(x, y, days) of one model with x = log(Q / V), y = I / sigma; None if not cached.
 
-    sig is the output of lobi.vol.daily_sigmas; V and the Parkinson sigma are looked
+    sig is the output of lob_impact.vol.daily_sigmas; V and the Parkinson sigma are looked
     up by (stock, day). Points without daily statistics (NaN) or with non-finite x or
     y are dropped.
     """
@@ -206,7 +206,7 @@ def markdown(stock, rows, absent, degenerate):
                  % (model, v['delta'], v['lo'], v['hi'], v['hw'], v['n_day'], v['n_pts']))
     L.append('')
     if absent:
-        L.append('Absent from the points cache (run lobi.points for them): ' + ', '.join(absent))
+        L.append('Absent from the points cache (run lob_impact.points for them): ' + ', '.join(absent))
     if degenerate:
         L.append('Degenerate bootstrap (every resample NaN, no identifiable law): '
                  + ', '.join(degenerate))
@@ -215,31 +215,31 @@ def markdown(stock, rows, absent, degenerate):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        prog='python -m lobi.delta',
+        prog='python -m lob_impact.delta',
         description='Build-up exponent delta (signed binned estimator) with a day-clustered '
                     'bootstrap CI, per model. See the module docstring for the method.')
     ap.add_argument('--stock', required=True, help='ticker of the points cache and the daily rows')
     ap.add_argument('--models', required=True, help='comma-separated model names, in report order')
-    ap.add_argument('--daily', required=True, help='daily statistics CSV (format: lobi.vol)')
+    ap.add_argument('--daily', required=True, help='daily statistics CSV (format: lob_impact.vol)')
     ap.add_argument('--points', default=None,
-                    help='points cache from lobi.points (default: <LOBI_RESULTS>/points_<STOCK>.npz)')
-    ap.add_argument('--out_dir', '--outdir', dest='out_dir', default=LOBI_RESULTS,
-                    help='output directory (default: LOBI_RESULTS)')
+                    help='points cache from lob_impact.points (default: <LOB_IMPACT_RESULTS>/points_<STOCK>.npz)')
+    ap.add_argument('--out_dir', '--outdir', dest='out_dir', default=LOB_IMPACT_RESULTS,
+                    help='output directory (default: LOB_IMPACT_RESULTS)')
     args = ap.parse_args(argv)
 
     models = [m for m in args.models.split(',') if m]
     if not models:
         ap.error('--models is empty')
-    points = args.points or os.path.join(LOBI_RESULTS, 'points_%s.npz' % args.stock)
+    points = args.points or os.path.join(LOB_IMPACT_RESULTS, 'points_%s.npz' % args.stock)
     if not os.path.isfile(points):
-        ap.error('points cache not found: %s (run python -m lobi.points first)' % points)
+        ap.error('points cache not found: %s (run python -m lob_impact.points first)' % points)
     if not os.path.isfile(args.daily):
         ap.error('daily statistics CSV not found: %s' % args.daily)
 
     sig = daily_sigmas(args.daily)
     res, rows, absent, degenerate = run(points, sig, args.stock, models)
     if not rows and not degenerate:
-        raise SystemExit('none of %s is in %s (run python -m lobi.points for them)'
+        raise SystemExit('none of %s is in %s (run python -m lob_impact.points for them)'
                          % (', '.join(models), points))
 
     os.makedirs(args.out_dir, exist_ok=True)

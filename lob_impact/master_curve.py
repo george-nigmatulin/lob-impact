@@ -12,7 +12,7 @@ avoids the blow-ups of a per-rollout I / I_peak when a rollout's own peak is nea
 
   * shape 'beta'        100 children, no cooling: v in [0, 1], the build-up.
   * any other shape     10 children, then 100 cooling windows: v in [0, 11], build-up
-                        followed by relaxation (lobi.decay_shape reads this cache).
+                        followed by relaxation (lob_impact.decay_shape reads this cache).
 
 Gates, per model:
   * a rollout whose |I| exceeds COLLAPSE_BPS anywhere is dropped as a collapsed book;
@@ -22,14 +22,14 @@ Gates, per model:
     insignificant denominator turns the ratio into noise, so such curves are reported
     but not drawn.
 
-Inputs (headerless LOBSTER CSVs; see lobi.points for the full file contract)
+Inputs (headerless LOBSTER CSVs; see lob_impact.points for the full file contract)
   <grid>/<STOCK>-<MODEL>-<shape>/{buy,sell}/**/data_gen/*orderbook*gen*.csv
   <grid>/<STOCK>-<MODEL>-<shape>/{buy,sell}/**/aggressive_indices_<YYYY-MM-DD>.csv
   The day is the '_YYYY-MM-DD_' in the orderbook file name; buy rollouts enter with sign
   +1, sell rollouts with -1. The reference mid is the row before the first child; the
   cooling-window length is the smallest gap between child indices.
 
-Output: <LOBI_RESULTS>/master_curve/master_curve_<STOCK>_<shape>.npz (or --out stem)
+Output: <LOB_IMPACT_RESULTS>/master_curve/master_curve_<STOCK>_<shape>.npz (or --out stem)
   vgrid                 grid v = k / n_ins, k = 0..n_ins + n_cool
   <model>_master        master(v)
   <model>_peak          <I(1)>, bps
@@ -39,7 +39,7 @@ Output: <LOBI_RESULTS>/master_curve/master_curve_<STOCK>_<shape>.npz (or --out s
   plus <stem>.png, a diagnostic figure (skipped with --no_plot).
 
 Usage:
-    python -m lobi.master_curve --stock XYZ --models MyModel,Baseline --shape relaxation
+    python -m lob_impact.master_curve --stock XYZ --models MyModel,Baseline --shape relaxation
 """
 import argparse
 import csv
@@ -49,7 +49,7 @@ import re
 
 import numpy as np
 
-from lobi.paths import LOBI_GRID, LOBI_RESULTS
+from lob_impact.paths import LOB_IMPACT_GRID, LOB_IMPACT_RESULTS
 
 SENTINEL = 2147483647       # price the simulator writes for an empty book side
 DATE_RE = re.compile(r'_(\d{4}-\d{2}-\d{2})_')
@@ -177,7 +177,7 @@ def plot(stock, shape, vgrid, curves, png):
     except ImportError:
         print('matplotlib not available: figure skipped')
         return None
-    from lobi.trajectory import propagator_curve
+    from lob_impact.trajectory import propagator_curve
     fig, ax = plt.subplots(figsize=(7.2, 4.4))
     for i, (m, c) in enumerate(curves.items()):
         color = PALETTE[i % len(PALETTE)]
@@ -207,7 +207,7 @@ def plot(stock, shape, vgrid, curves, png):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        prog='python -m lobi.master_curve',
+        prog='python -m lob_impact.master_curve',
         description='Mean signed impact on the executed-volume clock, normalised at the end '
                     'of execution. See the module docstring for the method and the layout.')
     ap.add_argument('--stock', required=True, help='ticker; experiment directories are '
@@ -216,10 +216,10 @@ def main(argv=None):
     ap.add_argument('--shape', default='beta',
                     help="'beta' (100 children, build-up) or e.g. 'relaxation' "
                          '(10 children + 100 cooling windows)')
-    ap.add_argument('--grid', default=LOBI_GRID,
-                    help='root of the metaorder-injection rollouts (default: LOBI_GRID)')
+    ap.add_argument('--grid', default=LOB_IMPACT_GRID,
+                    help='root of the metaorder-injection rollouts (default: LOB_IMPACT_GRID)')
     ap.add_argument('--out', default=None, help='output stem (default: '
-                    '<LOBI_RESULTS>/master_curve/master_curve_<STOCK>_<shape>)')
+                    '<LOB_IMPACT_RESULTS>/master_curve/master_curve_<STOCK>_<shape>)')
     ap.add_argument('--no_plot', action='store_true', help='skip the diagnostic figure')
     args = ap.parse_args(argv)
 
@@ -243,10 +243,10 @@ def main(argv=None):
         cache[f'{m}_sig'] = c['sig']
     if not curves:
         raise SystemExit('no normalisable model for %s, shape %s, under %s: check --stock, '
-                         '--models, --shape and the layout (python -m pydoc lobi.master_curve)'
+                         '--models, --shape and the layout (python -m pydoc lob_impact.master_curve)'
                          % (args.stock, args.shape, args.grid))
 
-    stem = args.out or os.path.join(LOBI_RESULTS, 'master_curve',
+    stem = args.out or os.path.join(LOB_IMPACT_RESULTS, 'master_curve',
                                     f'master_curve_{args.stock}_{args.shape}')
     stem = os.path.splitext(stem)[0]
     os.makedirs(os.path.dirname(os.path.abspath(stem)), exist_ok=True)

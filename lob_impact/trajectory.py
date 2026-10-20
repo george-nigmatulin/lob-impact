@@ -29,7 +29,7 @@ Inputs (build)
     <grid>/<STOCK>-<MODEL>-<shape>/{buy,sell}/**/data_gen/*orderbook*gen*.csv
     <grid>/<STOCK>-<MODEL>-<shape>/{buy,sell}/**/aggressive_indices_<YYYY-MM-DD>.csv
 
-* --grid defaults to LOBI_GRID. `**` is any depth, typically one exp_* directory per
+* --grid defaults to LOB_IMPACT_GRID. `**` is any depth, typically one exp_* directory per
   generation run.
 * orderbook CSV: headerless LOBSTER orderbook, one row per message of the rollout,
   column 0 = best ask price, column 2 = best bid price (integer price units). A row whose
@@ -48,15 +48,15 @@ Inputs (build)
   replayed through the same pipeline. It is read like any other model.
 * Optional reference curves (--daily, --per_day_params, --Y, all three together): the
   square-root law I(k) = Y * sigma_d * sqrt(k * child_d / V_d) * 1e4 bps averaged over days,
-  with sigma_d and V_d from lobi.vol.daily_sigmas(--daily) (daily statistics CSV, format
-  in lobi.vol) and the child size child_d and messages between children mb_d from the
+  with sigma_d and V_d from lob_impact.vol.daily_sigmas(--daily) (daily statistics CSV, format
+  in lob_impact.vol) and the child size child_d and messages between children mb_d from the
   per-day parameter CSV (header row; columns day, child, mb; other columns ignored; if a
   day appears on several rows the last one is used). For relaxation shapes also the
   transient-impact (propagator) curve anchored at the square-root peak.
 
 Outputs (build)
 ---------------
-<stem>.npz, default LOBI_RESULTS/mid_impact/mid_trajectory_<STOCK>_<shape>.npz, per model M:
+<stem>.npz, default LOB_IMPACT_RESULTS/mid_impact/mid_trajectory_<STOCK>_<shape>.npz, per model M:
     M_x       int      message-row index, 0 .. longest rollout - 1
     M_mid     float    message-clock central trajectory, bps (NaN on thinly covered rows)
     M_band    float    its standard error, bps (--estimator median: 1.57 * IQR / sqrt(n))
@@ -74,9 +74,9 @@ Outputs (build)
 
 Usage
 -----
-    python -m lobi.trajectory build --stock XYZ --models Historic,MyModel --shape beta
-    python -m lobi.trajectory build --stock XYZ --models Historic,MyModel --shape relaxation
-    python -m lobi.trajectory summary --cache results/mid_impact/mid_trajectory_XYZ_beta.npz
+    python -m lob_impact.trajectory build --stock XYZ --models Historic,MyModel --shape beta
+    python -m lob_impact.trajectory build --stock XYZ --models Historic,MyModel --shape relaxation
+    python -m lob_impact.trajectory summary --cache results/mid_impact/mid_trajectory_XYZ_beta.npz
     (summary infers n_ins from the cache: 100 for the build-up shape, 10 for relaxation)
 """
 import argparse
@@ -87,7 +87,7 @@ import re
 
 import numpy as np
 
-from lobi.paths import LOBI_GRID, LOBI_RESULTS
+from lob_impact.paths import LOB_IMPACT_GRID, LOB_IMPACT_RESULTS
 
 SENTINEL = 2147483647        # price the simulator writes for an empty book side
 DATE_RE = re.compile(r'_(\d{4}-\d{2}-\d{2})_')
@@ -193,7 +193,7 @@ def sqrt_law_curve(daily, per_day_csv, stock, n_ins, n_total_blocks, Lmax, Y, me
     y(k) = mean_d[Y * sigma_d * sqrt(k * child_d / V_d)] * 1e4 bps. For relaxation shapes
     (n_total_blocks > n_ins) the curve is held flat at its last value out to Lmax: the law
     gives the peak and says nothing about relaxation. Returns (x, y) or (None, None)."""
-    from lobi.vol import daily_sigmas
+    from lob_impact.vol import daily_sigmas
     sig = daily_sigmas(daily)
     with open(per_day_csv) as fh:
         pd_rows = {r['day']: r for r in csv.DictReader(fh)}
@@ -431,7 +431,7 @@ def build(args):
         curves.append(info)
     if not curves:
         raise SystemExit('no usable rollouts for %s, shape %s, under %s: check --stock, '
-                         '--models, --shape and the layout (python -m pydoc lobi.trajectory)'
+                         '--models, --shape and the layout (python -m pydoc lob_impact.trajectory)'
                          % (args.stock, args.shape, args.grid))
     ref = None
     if args.daily and args.per_day_params:
@@ -440,7 +440,7 @@ def build(args):
             cache.update(res[0])
             ref = res[1]
     stem = (os.path.splitext(args.out)[0] if args.out else
-            os.path.join(LOBI_RESULTS, 'mid_impact',
+            os.path.join(LOB_IMPACT_RESULTS, 'mid_impact',
                          'mid_trajectory_%s_%s' % (args.stock, args.shape)))
     os.makedirs(os.path.dirname(os.path.abspath(stem)), exist_ok=True)
     np.savez(stem + '.npz', **cache)
@@ -587,7 +587,7 @@ def summary(args):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog='python -m lobi.trajectory',
+    ap = argparse.ArgumentParser(prog='python -m lob_impact.trajectory',
                                  description=__doc__.split('\n')[0],
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest='cmd', required=True)
@@ -601,7 +601,7 @@ def main(argv=None):
                    help="protocol suffix of the grid directories: 'beta' (100 children) or a "
                         "relaxation shape such as 'relaxation' (10 children + 100 cooling "
                         "windows)")
-    b.add_argument('--grid', default=LOBI_GRID, help='root of the metaorder rollouts')
+    b.add_argument('--grid', default=LOB_IMPACT_GRID, help='root of the metaorder rollouts')
     b.add_argument('--estimator', default='tmean', choices=['tmean', 'median', 'mean'],
                    help='message-clock central estimator')
     b.add_argument('--trim', type=float, default=0.10,
@@ -615,10 +615,10 @@ def main(argv=None):
                    help='also store the per-rollout k-clock matrix <model>_K (+ _K_side, _K_day)')
     b.add_argument('--out', default=None,
                    help='output stem (extension ignored); default '
-                        'LOBI_RESULTS/mid_impact/mid_trajectory_<STOCK>_<shape>')
+                        'LOB_IMPACT_RESULTS/mid_impact/mid_trajectory_<STOCK>_<shape>')
     b.add_argument('--no_plot', action='store_true', help='write the cache only')
     b.add_argument('--daily', default=None,
-                   help='daily statistics CSV (format: lobi.vol); with --per_day_params and --Y '
+                   help='daily statistics CSV (format: lob_impact.vol); with --per_day_params and --Y '
                         'adds the square-root-law reference')
     b.add_argument('--per_day_params', default=None,
                    help='per-day protocol CSV with columns day, child, mb')
@@ -628,7 +628,7 @@ def main(argv=None):
     b.add_argument('--sigma_method', default='parkinson',
                    choices=['parkinson', 'garman_klass', 'rogers_satchell', 'close_to_close',
                             'yang_zhang', 'range_raw'],
-                   help='daily sigma from lobi.vol for the square-root-law reference')
+                   help='daily sigma from lob_impact.vol for the square-root-law reference')
     b.add_argument('--beta_prop', type=float, default=0.5,
                    help='propagator kernel exponent of the relaxation reference')
 
@@ -642,8 +642,8 @@ def main(argv=None):
                    help='also read raw orderbooks (needs --stock, --shape, --grid)')
     s.add_argument('--stock', default=None, help='ticker, for --book_health')
     s.add_argument('--shape', default='beta', help='protocol shape, for --book_health')
-    s.add_argument('--grid', default=LOBI_GRID,
-                   help='root of the metaorder rollouts, for --book_health (default: LOBI_GRID)')
+    s.add_argument('--grid', default=LOB_IMPACT_GRID,
+                   help='root of the metaorder rollouts, for --book_health (default: LOB_IMPACT_GRID)')
 
     args = ap.parse_args(argv)
     if args.cmd == 'build':

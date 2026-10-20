@@ -24,22 +24,22 @@ pip install -e ".[test]"
 pytest -q                          # end-to-end smoke test on synthetic data, about ten seconds
 ```
 
-Python 3.9 or newer; NumPy, pandas, Matplotlib and PyYAML. `python -m lobi` lists the
-tools. Each one is a module with its own help, `python -m lobi.<tool> --help`, and its
+Python 3.9 or newer; NumPy, pandas, Matplotlib and PyYAML. `python -m lob_impact` lists the
+tools. Each one is a module with its own help, `python -m lob_impact.<tool> --help`, and its
 full documentation (inputs, outputs, every cached key) is in
-`python -m pydoc lobi.<tool>`.
+`python -m pydoc lob_impact.<tool>`.
 
 ## Try it on synthetic data
 
 ```bash
-python -m lobi.synthetic --out /tmp/lobi_demo
-export LOBI_CONTROLS=/tmp/lobi_demo/controls LOBI_GRID=/tmp/lobi_demo/grid \
-       LOBI_RESULTS=/tmp/lobi_demo/results
-python -m lobi.flow_balance --stock XYZ --models ToyModel
-python -m lobi.scorecard --stock XYZ
-python -m lobi.trajectory build --stock XYZ --models Historic,ToyModel --shape beta
-python -m lobi.points --stock XYZ --models Historic,ToyModel
-python -m lobi.delta --stock XYZ --models Historic,ToyModel --daily /tmp/lobi_demo/daily_stats.csv
+python -m lob_impact.synthetic --out /tmp/lob_impact_demo
+export LOB_IMPACT_CONTROLS=/tmp/lob_impact_demo/controls LOB_IMPACT_GRID=/tmp/lob_impact_demo/grid \
+       LOB_IMPACT_RESULTS=/tmp/lob_impact_demo/results
+python -m lob_impact.flow_balance --stock XYZ --models ToyModel
+python -m lob_impact.scorecard --stock XYZ
+python -m lob_impact.trajectory build --stock XYZ --models Historic,ToyModel --shape beta
+python -m lob_impact.points --stock XYZ --models Historic,ToyModel
+python -m lob_impact.delta --stock XYZ --models Historic,ToyModel --daily /tmp/lob_impact_demo/daily_stats.csv
 ```
 
 The toy data has a square-root impact path built in, so the build-up exponent comes out
@@ -77,10 +77,10 @@ days.
 ## Input layout
 
 ```
-$LOBI_CONTROLS/
+$LOB_IMPACT_CONTROLS/
     noins/<STOCK>-<MODEL>-beta/{buy,sell}/exp_<run>/          free runs    (Phase 1)
     invisible/<STOCK>-<MODEL>-beta/{buy,sell}/exp_<run>/      blind arm    (Phase 2)
-$LOBI_GRID/
+$LOB_IMPACT_GRID/
     <STOCK>-<MODEL>-beta/{buy,sell}/exp_<run>/                visible arm, build-up
     <STOCK>-<MODEL>-relaxation/{buy,sell}/exp_<run>/          visible arm, relaxation
 ```
@@ -113,28 +113,28 @@ CSV files are headerless and follow LOBSTER:
 The build-up exponent also needs **daily statistics of the real stock**: a CSV with the
 header `ticker,day,open_price,highest_price,lowest_price,close_price,execution_sum`, one row
 per trading day, holding the first, highest, lowest and last execution price and the total
-executed volume in shares (format details: `python -c "import lobi.vol; help(lobi.vol)"`).
+executed volume in shares (format details: `python -c "import lob_impact.vol; help(lob_impact.vol)"`).
 
-Point the tools at the data with the environment variables `LOBI_CONTROLS`, `LOBI_GRID`
-and `LOBI_RESULTS`, with `config/paths.yaml` (copy `config/paths.example.yaml`), or with
-each tool's path flags. `python -m lobi.paths` prints what was resolved.
+Point the tools at the data with the environment variables `LOB_IMPACT_CONTROLS`, `LOB_IMPACT_GRID`
+and `LOB_IMPACT_RESULTS`, with `config/paths.yaml` (copy `config/paths.example.yaml`), or with
+each tool's path flags. `python -m lob_impact.paths` prints what was resolved.
 
 ## The tools
 
 | phase | what it measures | command |
 |---|---|---|
-| 1 | trade-sign autocorrelation and its exponent, Hurst exponent of the mid, response to a trade | `python -m lobi.flow_balance --stock S --models M` |
-| 1 | free drift | `python -m lobi.drift --stock S --models M` |
-| 1 | response ratio R(100)/R(1), H on two lag bands, distances to the reference | `python -m lobi.scorecard --stock S` |
-| 2, 3 | mean impact per message and per child | `python -m lobi.trajectory build --stock S --models Historic,M --shape beta` (and `--shape relaxation`) |
-| 2, 3 | detection against three standard errors, horizon, end over execution | `python -m lobi.trajectory summary --cache <npz>` |
-| 2 | visible arm against blind arm | `python -m lobi.triangle build --stock S --models M` |
-| 2 | impact against executed volume, one point per child | `python -m lobi.points --stock S --models Historic,M` |
-| 2 | build-up exponent with a day-clustered 95% interval | `python -m lobi.delta --stock S --models Historic,M --daily daily.csv` |
-| 2, 3 | master curve, impact normalised at the end of execution | `python -m lobi.master_curve --stock S --models Historic,M --shape relaxation` |
-| 3 | shape of the relaxation: rise, flat, decline, and its law where identifiable | `python -m lobi.decay_shape --stock S` |
+| 1 | trade-sign autocorrelation and its exponent, Hurst exponent of the mid, response to a trade | `python -m lob_impact.flow_balance --stock S --models M` |
+| 1 | free drift | `python -m lob_impact.drift --stock S --models M` |
+| 1 | response ratio R(100)/R(1), H on two lag bands, distances to the reference | `python -m lob_impact.scorecard --stock S` |
+| 2, 3 | mean impact per message and per child | `python -m lob_impact.trajectory build --stock S --models Historic,M --shape beta` (and `--shape relaxation`) |
+| 2, 3 | detection against three standard errors, horizon, end over execution | `python -m lob_impact.trajectory summary --cache <npz>` |
+| 2 | visible arm against blind arm | `python -m lob_impact.triangle build --stock S --models M` |
+| 2 | impact against executed volume, one point per child | `python -m lob_impact.points --stock S --models Historic,M` |
+| 2 | build-up exponent with a day-clustered 95% interval | `python -m lob_impact.delta --stock S --models Historic,M --daily daily.csv` |
+| 2, 3 | master curve, impact normalised at the end of execution | `python -m lob_impact.master_curve --stock S --models Historic,M --shape relaxation` |
+| 3 | shape of the relaxation: rise, flat, decline, and its law where identifiable | `python -m lob_impact.decay_shape --stock S` |
 
-Outputs land under `LOBI_RESULTS`: caches as `.npz`, tables as Markdown. A tool whose own
+Outputs land under `LOB_IMPACT_RESULTS`: caches as `.npz`, tables as Markdown. A tool whose own
 gate fails reports that the quantity is not identified rather than printing a number: a
 response that does not clear three standard errors, a fit without enough positive bins, a
 bootstrap whose resamples are all undefined.

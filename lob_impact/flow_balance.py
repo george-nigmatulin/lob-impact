@@ -32,10 +32,10 @@ Inputs (headerless LOBSTER-style CSV pairs, one pair per rollout)
   price, direction (+1 resting buy order, -1 resting sell order). Orderbook columns:
   ask_price_1, ask_size_1, bid_price_1, bid_size_1, ... Prices in integer units with
   TICK units per tick; a side priced >= SENT or <= 0 is empty.
-  <controls> defaults to LOBI_CONTROLS; <ref_sub> and <noins_sub> default to 'noins'.
+  <controls> defaults to LOB_IMPACT_CONTROLS; <ref_sub> and <noins_sub> default to 'noins'.
   Only the buy-side folder is read: with nothing injected the side label is arbitrary.
 
-Outputs, in <LOBI_RESULTS>/flow_balance/ or --outdir (the reference arm is stored as 'Real')
+Outputs, in <LOB_IMPACT_RESULTS>/flow_balance/ or --outdir (the reference arm is stored as 'Real')
   flow_balance_<STOCK><tag>.npz       per source <name>: <name>_C (300,), <name>_V (21,)
                                       on var_lags(), <name>_R and <name>_Rc (200,) in ticks,
                                       <name>_gamma, <name>_H (scalars),
@@ -48,7 +48,7 @@ Outputs, in <LOBI_RESULTS>/flow_balance/ or --outdir (the reference arm is store
   flow_balance_<STOCK><tag>.png       diagnostic figure (skipped with --no_plot)
 
 Example
-  python -m lobi.flow_balance --stock XYZ --models MyModel,MyBaseline --n_files 64
+  python -m lob_impact.flow_balance --stock XYZ --models MyModel,MyBaseline --n_files 64
 """
 import argparse
 import csv
@@ -58,7 +58,7 @@ import re
 
 import numpy as np
 
-from lobi.paths import LOBI_CONTROLS, LOBI_RESULTS
+from lob_impact.paths import LOB_IMPACT_CONTROLS, LOB_IMPACT_RESULTS
 
 SENT = 2147483647          # price written for an empty book side (int32 max)
 TICK = 100                 # price units per tick
@@ -391,7 +391,7 @@ def plot(results, stock, png):
 
 def parse_args(argv):
     ap = argparse.ArgumentParser(
-        prog='python -m lobi.flow_balance',
+        prog='python -m lob_impact.flow_balance',
         description='Trade-sign ACF / gamma_flow, Hurst H and trade response R, Rc '
                     'of free-running rollouts against the reference arm.')
     ap.add_argument('--stock', required=True, help='ticker used in the folder and file names')
@@ -400,8 +400,8 @@ def parse_args(argv):
     ap.add_argument('--ref', default='Historic',
                     help="label of the reference arm (real messages replayed through the same "
                          "pipeline); stored under the key 'Real'")
-    ap.add_argument('--controls', default=LOBI_CONTROLS,
-                    help='root of the free-generation rollouts (default: LOBI_CONTROLS)')
+    ap.add_argument('--controls', default=LOB_IMPACT_CONTROLS,
+                    help='root of the free-generation rollouts (default: LOB_IMPACT_CONTROLS)')
     ap.add_argument('--noins_sub', default='noins',
                     help='subdirectory of --controls holding the model rollouts')
     ap.add_argument('--ref_sub', default='noins',
@@ -415,7 +415,7 @@ def parse_args(argv):
     ap.add_argument('--no_stratify_days', dest='stratify_days', action='store_false',
                     help='take the first --n_files paths in sorted order instead')
     ap.add_argument('--outdir', '--out_dir', dest='outdir', default=None,
-                    help='output directory (default: LOBI_RESULTS/flow_balance)')
+                    help='output directory (default: LOB_IMPACT_RESULTS/flow_balance)')
     ap.add_argument('--no_plot', action='store_true', help='skip the diagnostic figure')
     return ap.parse_args(argv)
 
@@ -424,7 +424,7 @@ def main(argv=None):
     global MAX_MSGS
     args = parse_args(argv)
     MAX_MSGS = args.max_msgs
-    outdir = args.outdir or os.path.join(LOBI_RESULTS, 'flow_balance')
+    outdir = args.outdir or os.path.join(LOB_IMPACT_RESULTS, 'flow_balance')
     models = [x for x in args.models.split(',') if x]
 
     results = []
@@ -434,7 +434,7 @@ def main(argv=None):
             results.append(r)
     if not results:
         raise SystemExit('no usable rollouts for %s under %s: check --stock, --models, --ref '
-                         'and the layout (python -m pydoc lobi.flow_balance)'
+                         'and the layout (python -m pydoc lob_impact.flow_balance)'
                          % (args.stock, args.controls))
 
     os.makedirs(outdir, exist_ok=True)

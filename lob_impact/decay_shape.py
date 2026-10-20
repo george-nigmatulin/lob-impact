@@ -26,7 +26,7 @@ relaxation-shape rollout set divided by its mean at execution end, on v = k / n_
 Inputs
 ------
 One master-curve npz per stock; default path
-    LOBI_RESULTS/master_curve/master_curve_<STOCK>_relaxation.npz
+    LOB_IMPACT_RESULTS/master_curve/master_curve_<STOCK>_relaxation.npz
 (--master_curve takes a pattern containing {stock}). Keys read:
     vgrid        float  v = k / n_ins, k = 0..n_ins + n_cool
     <M>_master   float  master curve of model M on vgrid (NaN where not measured)
@@ -36,7 +36,7 @@ points on the cooling segment is skipped.
 
 Outputs
 -------
-<out_dir>/decay_shape_<STOCK>.md (out_dir default LOBI_RESULTS/master_curve), one row per
+<out_dir>/decay_shape_<STOCK>.md (out_dir default LOB_IMPACT_RESULTS/master_curve), one row per
     model: sig (y/n), e/p (last finite master value: end of window over execution end),
     drop, slope per unit z (least squares), n_eff, dAIC(PL), dAIC(EXP), ghat, verdict.
 <out_dir>/decay_shape_<STOCK>.npz: <M>_drop, <M>_slope, <M>_n, <M>_n_eff, <M>_dAIC_pl,
@@ -44,8 +44,8 @@ Outputs
 
 Usage
 -----
-    python -m lobi.decay_shape --stock XYZ
-    python -m lobi.decay_shape --stock XYZ,ABC \\
+    python -m lob_impact.decay_shape --stock XYZ
+    python -m lob_impact.decay_shape --stock XYZ,ABC \\
         --master_curve 'caches/master_curve_{stock}_relaxation.npz'
 """
 import argparse
@@ -53,7 +53,7 @@ import os
 
 import numpy as np
 
-from lobi.paths import LOBI_RESULTS
+from lob_impact.paths import LOB_IMPACT_RESULTS
 
 GGRID = np.arange(0.05, 1.51, 0.05)   # power-law exponent search grid
 TGRID = np.arange(0.1, 5.01, 0.1)     # exponential timescale search grid (units of z)
@@ -194,24 +194,24 @@ def run(stock, src, out_dir):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog='python -m lobi.decay_shape',
+    ap = argparse.ArgumentParser(prog='python -m lob_impact.decay_shape',
                                  description='Shape of the relaxation segment of the impact '
                                              'master curve: rise, flat or decline, and the '
                                              'decay law where the data identify it. Full '
-                                             'method: python -m pydoc lobi.decay_shape')
+                                             'method: python -m pydoc lob_impact.decay_shape')
     ap.add_argument('--stock', required=True, help='ticker, or several comma-separated')
     ap.add_argument('--master_curve',
-                    default=os.path.join(LOBI_RESULTS, 'master_curve',
+                    default=os.path.join(LOB_IMPACT_RESULTS, 'master_curve',
                                          'master_curve_{stock}_relaxation.npz'),
                     help='master-curve npz path; {stock} is replaced by the ticker')
     ap.add_argument('--out_dir', '--outdir', dest='out_dir',
-                    default=os.path.join(LOBI_RESULTS, 'master_curve'),
-                    help='output directory (default: LOBI_RESULTS/master_curve)')
+                    default=os.path.join(LOB_IMPACT_RESULTS, 'master_curve'),
+                    help='output directory (default: LOB_IMPACT_RESULTS/master_curve)')
     args = ap.parse_args(argv)
     done = [run(st, args.master_curve.replace('{stock}', st), args.out_dir)
             for st in [s for s in args.stock.split(',') if s]]
     if not any(r is not None for r in done):
-        raise SystemExit('no master-curve cache found (build it with python -m lobi.master_curve '
+        raise SystemExit('no master-curve cache found (build it with python -m lob_impact.master_curve '
                          '--shape relaxation, or pass --master_curve)')
 
 

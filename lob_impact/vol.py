@@ -9,7 +9,7 @@ ticker and trading day. Extra columns are ignored.
 
     ticker          symbol, matched exactly against --stock
     day             trading day as YYYY-MM-DD; must be the same string as the date
-                    in the rollout file names (see lobi.points)
+                    in the rollout file names (see lob_impact.points)
     open_price      first execution price of the day           (optional column)
     highest_price   highest execution price of the day         (required)
     lowest_price    lowest execution price of the day          (required)
@@ -63,7 +63,7 @@ execution_sum}}; sigma is a daily log-return scale (dimensionless), V is in the
 unit of execution_sum. The command line prints the table for one ticker.
 
 Usage:
-    python -m lobi.vol --daily daily_stats.csv --stock XYZ
+    python -m lob_impact.vol --daily daily_stats.csv --stock XYZ
 """
 import argparse
 import csv
@@ -149,9 +149,9 @@ def daily_sigmas(daily_csv):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        prog='python -m lobi.vol',
+        prog='python -m lob_impact.vol',
         description='Print the daily sigma estimators and daily volume of one ticker.',
-        epilog='See the module docstring (python -c "import lobi.vol; help(lobi.vol)") '
+        epilog='See the module docstring (python -c "import lob_impact.vol; help(lob_impact.vol)") '
                'for the CSV format.')
     ap.add_argument('--daily', required=True, help='daily statistics CSV (format: see module docstring)')
     ap.add_argument('--stock', required=True, help='ticker, matched exactly against the ticker column')

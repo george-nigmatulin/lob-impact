@@ -1,6 +1,6 @@
 """Phase 1 scorecard: response ratio, banded Hurst exponents and short-lag gamma per source.
 
-Reads a cache written by lobi.flow_balance and prints, for every source in it:
+Reads a cache written by lob_impact.flow_balance and prints, for every source in it:
 
   R(1), R(100)     response to a trade after 1 and 100 trades, in ticks. The drift-corrected
                    Rc is used when the cache has it: the raw R contains a pure-drift term
@@ -21,7 +21,7 @@ A second table gives the signed differences (source - reference) of the ratio an
 H bands. The response ratio is the primary signal, short-lag H the secondary one.
 
 Inputs
-  --cache PATH, or by default <LOBI_RESULTS>/flow_balance/flow_balance_<STOCK><tag>.npz.
+  --cache PATH, or by default <LOB_IMPACT_RESULTS>/flow_balance/flow_balance_<STOCK><tag>.npz.
   Keys used per source <name>: <name>_Rc or <name>_R (lag 1..200), <name>_V (variance
   curve on flow_balance.var_lags()), <name>_C (ACF at lags 1..300). Sources are listed in
   cache order, with the reference row first.
@@ -29,16 +29,16 @@ Output
   printed tables only.
 
 Example
-  python -m lobi.scorecard --stock XYZ
-  python -m lobi.scorecard --cache results/flow_balance/flow_balance_XYZ_short.npz --ref Real
+  python -m lob_impact.scorecard --stock XYZ
+  python -m lob_impact.scorecard --cache results/flow_balance/flow_balance_XYZ_short.npz --ref Real
 """
 import argparse
 import os
 
 import numpy as np
 
-from lobi.flow_balance import REAL, var_lags
-from lobi.paths import LOBI_RESULTS
+from lob_impact.flow_balance import REAL, var_lags
+from lob_impact.paths import LOB_IMPACT_RESULTS
 
 H_BANDS = ((2, 10), (10, 30))   # lag bands (trades) of the two H fits
 GAMMA_FIT = (2, 15)             # short-lag window of the gamma refit
@@ -155,20 +155,20 @@ def print_distance_table(z, models, ref, ref_r, ref_r1, ref_h):
 
 def parse_args(argv):
     ap = argparse.ArgumentParser(
-        prog='python -m lobi.scorecard',
+        prog='python -m lob_impact.scorecard',
         description='Response ratio, banded H and short-lag gamma per source of a '
                     'flow_balance cache, with distances to the reference row.')
     ap.add_argument('--cache', default=None,
                     help='flow_balance_<STOCK><tag>.npz (default: built from --stock/--tag)')
     ap.add_argument('--stock', default=None,
-                    help='locate the cache LOBI_RESULTS/flow_balance/flow_balance_<STOCK><tag>.npz')
+                    help='locate the cache LOB_IMPACT_RESULTS/flow_balance/flow_balance_<STOCK><tag>.npz')
     ap.add_argument('--tag', default='', help='filename suffix of the cache, with --stock')
     ap.add_argument('--ref', default=REAL, help='row every other row is measured against')
     a = ap.parse_args(argv)
     if a.cache is None:
         if not a.stock:
             ap.error('give --cache or --stock')
-        a.cache = os.path.join(LOBI_RESULTS, 'flow_balance',
+        a.cache = os.path.join(LOB_IMPACT_RESULTS, 'flow_balance',
                                f'flow_balance_{a.stock}{a.tag}.npz')
     return a
 

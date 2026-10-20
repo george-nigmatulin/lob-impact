@@ -14,10 +14,10 @@ was injected, one point is recorded per child order k:
 
 Impact stays signed: no I > 0 selection and no outlier trimming, so a downstream
 average over points is not biased by selecting on the sign of the response.
-Normalisation by daily volume and volatility is applied later (lobi.delta), so
+Normalisation by daily volume and volatility is applied later (lob_impact.delta), so
 one cache serves every normaliser.
 
-Input layout (under --grid, default LOBI_GRID):
+Input layout (under --grid, default LOB_IMPACT_GRID):
 
     <grid>/<STOCK>-<MODEL>-beta/buy/    buy metaorder rollouts  (sign +1)
     <grid>/<STOCK>-<MODEL>-beta/sell/   sell metaorder rollouts (sign -1)
@@ -55,7 +55,7 @@ sub-directory per run:
     at row 0, mid_ref is undefined, or the message file is missing. Points with
     an undefined mid at the child row are dropped.
 
-Output: <LOBI_RESULTS>/points_<STOCK>.npz (or --out), per model:
+Output: <LOB_IMPACT_RESULTS>/points_<STOCK>.npz (or --out), per model:
 
     <model>_Q     float64 (n,)   Q_k, shares
     <model>_I     float64 (n,)   I_k, dimensionless
@@ -67,12 +67,12 @@ path, then by k. If the output file already exists it is loaded and extended:
 models already in it are kept as they are and not re-collected (delete the file
 to rebuild them). Models without any usable rollout are reported and left out.
 
-With --daily (format: lobi.vol) the cached days of each model are checked
+With --daily (format: lob_impact.vol) the cached days of each model are checked
 against the daily statistics of --stock; points on uncovered days are dropped
-by lobi.delta. The check does not change the cache.
+by lob_impact.delta. The check does not change the cache.
 
 Usage:
-    python -m lobi.points --stock XYZ --models MyModel,Baseline \\
+    python -m lob_impact.points --stock XYZ --models MyModel,Baseline \\
         [--grid DIR] [--out FILE.npz] [--daily daily_stats.csv]
 """
 import argparse
@@ -83,8 +83,8 @@ import re
 
 import numpy as np
 
-from lobi.paths import LOBI_GRID, LOBI_RESULTS
-from lobi.vol import daily_sigmas
+from lob_impact.paths import LOB_IMPACT_GRID, LOB_IMPACT_RESULTS
+from lob_impact.vol import daily_sigmas
 
 SENTINEL = 2147483647                   # int32 max: placeholder price of an empty book side
 DATE_RE = re.compile(r'_(\d{4}-\d{2}-\d{2})_')
@@ -251,20 +251,20 @@ def report_day_coverage(cache_path, stock, models, daily_csv):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(
-        prog='python -m lobi.points',
+        prog='python -m lob_impact.points',
         description='Collect per-child (Q, I, day, k) impact points from metaorder-injection '
                     'rollouts into points_<STOCK>.npz. See the module docstring for the layout.')
     ap.add_argument('--stock', required=True,
                     help='ticker; experiment directories are named <STOCK>-<MODEL>-beta')
     ap.add_argument('--models', required=True,
                     help='comma-separated model names, as they appear in the directory names')
-    ap.add_argument('--grid', default=LOBI_GRID,
-                    help='root of the metaorder-injection rollouts (default: LOBI_GRID)')
+    ap.add_argument('--grid', default=LOB_IMPACT_GRID,
+                    help='root of the metaorder-injection rollouts (default: LOB_IMPACT_GRID)')
     ap.add_argument('--out', default=None,
-                    help='cache file (default: <LOBI_RESULTS>/points_<STOCK>.npz); an existing '
+                    help='cache file (default: <LOB_IMPACT_RESULTS>/points_<STOCK>.npz); an existing '
                          'file is extended, not replaced')
     ap.add_argument('--daily', default=None,
-                    help='optional daily statistics CSV (see lobi.vol): report cached days it '
+                    help='optional daily statistics CSV (see lob_impact.vol): report cached days it '
                          'does not cover for --stock')
     args = ap.parse_args(argv)
 
@@ -275,7 +275,7 @@ def main(argv=None):
         ap.error(f'grid directory not found: {args.grid}')
     if args.daily and not os.path.isfile(args.daily):
         ap.error(f'daily statistics CSV not found: {args.daily}')
-    out = args.out or os.path.join(LOBI_RESULTS, f'points_{args.stock}.npz')
+    out = args.out or os.path.join(LOB_IMPACT_RESULTS, f'points_{args.stock}.npz')
     if not out.endswith('.npz'):
         out += '.npz'                   # numpy appends it on save; keep reads and writes on one name
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
@@ -283,7 +283,7 @@ def main(argv=None):
     build_points(args.grid, args.stock, models, out)
     if not os.path.exists(out):
         raise SystemExit(f'no usable rollouts for {args.stock} under {args.grid}: check '
-                         '--stock, --models and the layout (python -m pydoc lobi.points)')
+                         '--stock, --models and the layout (python -m pydoc lob_impact.points)')
     print(f'cache -> {out}')
     if args.daily:
         report_day_coverage(out, args.stock, models, args.daily)
