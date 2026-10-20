@@ -1,4 +1,4 @@
-"""The lob-impact command (lob_impact.__main__): lists the tools, runs one by name."""
+"""The lob_impact command (lob_impact.__main__): lists the tools, runs one by name."""
 from lob_impact.__main__ import TOOLS, main
 
 

@@ -1,11 +1,11 @@
 cff-version: 1.2.0
-title: lob-impact
+title: lob_impact
 message: If you use this software, please cite it as below.
 type: software
 authors:
   - family-names: Nigmatulin
     given-names: George
-repository-code: https://github.com/george-nigmatulin/lob-impact
+repository-code: https://github.com/george-nigmatulin/lob_impact
 license: Apache-2.0
 version: 0.2.0
 keywords:

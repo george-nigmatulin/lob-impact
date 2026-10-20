@@ -1,4 +1,4 @@
-# lob-impact
+# lob_impact
 
 **Does your generative limit-order-book model reproduce market impact?**
 
@@ -17,30 +17,29 @@ once execution stops.
 ## Install
 
 ```bash
-git clone https://github.com/george-nigmatulin/lob-impact.git
-cd lob-impact
+git clone https://github.com/george-nigmatulin/lob_impact.git
+cd lob_impact
 python -m pip install -U pip       # editable installs need pip 21.3 or newer
 pip install -e ".[test]"
 pytest -q                          # end-to-end smoke test on synthetic data, about ten seconds
 ```
 
-Python 3.9 or newer; NumPy, pandas, Matplotlib and PyYAML. `lob-impact` lists the
-tools and `lob-impact <tool> --help` shows a tool's help. In Python the package is
-`lob_impact` (an import name cannot hold a hyphen): `python -m lob_impact.<tool>` runs a
-tool the same way, and its full documentation (inputs, outputs, every cached key) is in
-`python -m pydoc lob_impact.<tool>`.
+Python 3.9 or newer; NumPy, pandas, Matplotlib and PyYAML. `lob_impact` lists the
+tools and `lob_impact <tool> --help` shows a tool's help (`python -m lob_impact.<tool>`
+runs a tool the same way); a tool's full documentation (inputs, outputs, every cached key)
+is in `python -m pydoc lob_impact.<tool>`.
 
 ## Try it on synthetic data
 
 ```bash
-lob-impact synthetic --out /tmp/lob_impact_demo
+lob_impact synthetic --out /tmp/lob_impact_demo
 export LOB_IMPACT_CONTROLS=/tmp/lob_impact_demo/controls LOB_IMPACT_GRID=/tmp/lob_impact_demo/grid \
        LOB_IMPACT_RESULTS=/tmp/lob_impact_demo/results
-lob-impact flow_balance --stock XYZ --models ToyModel
-lob-impact scorecard --stock XYZ
-lob-impact trajectory build --stock XYZ --models Historic,ToyModel --shape beta
-lob-impact points --stock XYZ --models Historic,ToyModel
-lob-impact delta --stock XYZ --models Historic,ToyModel --daily /tmp/lob_impact_demo/daily_stats.csv
+lob_impact flow_balance --stock XYZ --models ToyModel
+lob_impact scorecard --stock XYZ
+lob_impact trajectory build --stock XYZ --models Historic,ToyModel --shape beta
+lob_impact points --stock XYZ --models Historic,ToyModel
+lob_impact delta --stock XYZ --models Historic,ToyModel --daily /tmp/lob_impact_demo/daily_stats.csv
 ```
 
 The toy data has a square-root impact path built in, so the build-up exponent comes out
@@ -118,22 +117,22 @@ executed volume in shares (format details: `python -c "import lob_impact.vol; he
 
 Point the tools at the data with the environment variables `LOB_IMPACT_CONTROLS`, `LOB_IMPACT_GRID`
 and `LOB_IMPACT_RESULTS`, with `config/paths.yaml` (copy `config/paths.example.yaml`), or with
-each tool's path flags. `lob-impact paths` prints what was resolved.
+each tool's path flags. `lob_impact paths` prints what was resolved.
 
 ## The tools
 
 | phase | what it measures | command |
 |---|---|---|
-| 1 | trade-sign autocorrelation and its exponent, Hurst exponent of the mid, response to a trade | `lob-impact flow_balance --stock S --models M` |
-| 1 | free drift | `lob-impact drift --stock S --models M` |
-| 1 | response ratio R(100)/R(1), H on two lag bands, distances to the reference | `lob-impact scorecard --stock S` |
-| 2, 3 | mean impact per message and per child | `lob-impact trajectory build --stock S --models Historic,M --shape beta` (and `--shape relaxation`) |
-| 2, 3 | detection against three standard errors, horizon, end over execution | `lob-impact trajectory summary --cache <npz>` |
-| 2 | visible arm against blind arm | `lob-impact triangle build --stock S --models M` |
-| 2 | impact against executed volume, one point per child | `lob-impact points --stock S --models Historic,M` |
-| 2 | build-up exponent with a day-clustered 95% interval | `lob-impact delta --stock S --models Historic,M --daily daily.csv` |
-| 2, 3 | master curve, impact normalised at the end of execution | `lob-impact master_curve --stock S --models Historic,M --shape relaxation` |
-| 3 | shape of the relaxation: rise, flat, decline, and its law where identifiable | `lob-impact decay_shape --stock S` |
+| 1 | trade-sign autocorrelation and its exponent, Hurst exponent of the mid, response to a trade | `lob_impact flow_balance --stock S --models M` |
+| 1 | free drift | `lob_impact drift --stock S --models M` |
+| 1 | response ratio R(100)/R(1), H on two lag bands, distances to the reference | `lob_impact scorecard --stock S` |
+| 2, 3 | mean impact per message and per child | `lob_impact trajectory build --stock S --models Historic,M --shape beta` (and `--shape relaxation`) |
+| 2, 3 | detection against three standard errors, horizon, end over execution | `lob_impact trajectory summary --cache <npz>` |
+| 2 | visible arm against blind arm | `lob_impact triangle build --stock S --models M` |
+| 2 | impact against executed volume, one point per child | `lob_impact points --stock S --models Historic,M` |
+| 2 | build-up exponent with a day-clustered 95% interval | `lob_impact delta --stock S --models Historic,M --daily daily.csv` |
+| 2, 3 | master curve, impact normalised at the end of execution | `lob_impact master_curve --stock S --models Historic,M --shape relaxation` |
+| 3 | shape of the relaxation: rise, flat, decline, and its law where identifiable | `lob_impact decay_shape --stock S` |
 
 Outputs land under `LOB_IMPACT_RESULTS`: caches as `.npz`, tables as Markdown. A tool whose own
 gate fails reports that the quantity is not identified rather than printing a number: a

@@ -1,4 +1,4 @@
-"""The lob-impact command: ``lob-impact`` lists the tools, ``lob-impact <tool> [args]`` runs one.
+"""The lob_impact command: ``lob_impact`` lists the tools, ``lob_impact <tool> [args]`` runs one.
 
 The same as ``python -m lob_impact`` and ``python -m lob_impact.<tool> [args]``.
 """
@@ -10,7 +10,7 @@ TOOLS = ('flow_balance', 'drift', 'scorecard', 'trajectory', 'master_curve', 'tr
 
 
 def list_tools():
-    print('lob-impact tools. Run lob-impact <tool> --help (or python -m lob_impact.<tool> --help),')
+    print('lob_impact tools. Run lob_impact <tool> --help (or python -m lob_impact.<tool> --help),')
     print('or read the full documentation of a tool with python -m pydoc lob_impact.<tool>.\n')
     for name in TOOLS:
         doc = (importlib.import_module('lob_impact.' + name).__doc__ or '').strip()
@@ -24,7 +24,7 @@ def main(argv=None):
         return 0
     tool, rest = argv[0].replace('-', '_'), argv[1:]
     if tool not in TOOLS:
-        print(f'lob-impact: no tool {argv[0]!r}; one of {", ".join(TOOLS)}', file=sys.stderr)
+        print(f'lob_impact: no tool {argv[0]!r}; one of {", ".join(TOOLS)}', file=sys.stderr)
         return 2
     return importlib.import_module('lob_impact.' + tool).main(rest) or 0
 
