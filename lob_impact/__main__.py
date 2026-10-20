@@ -6,7 +6,7 @@ TOOLS = ('flow_balance', 'drift', 'scorecard', 'trajectory', 'master_curve', 'tr
 
 
 def main():
-    print('LOB-Impact Benchmark tools. Run python -m lob_impact.<tool> --help, or read the full')
+    print('lob_impact tools. Run python -m lob_impact.<tool> --help, or read the full')
     print('documentation of a tool with python -m pydoc lob_impact.<tool>.\n')
     for name in TOOLS:
         doc = (importlib.import_module('lob_impact.' + name).__doc__ or '').strip()

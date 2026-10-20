@@ -1,4 +1,4 @@
-# LOB-Impact Benchmark
+# lob_impact
 
 **Does your generative limit-order-book model reproduce market impact?**
 
